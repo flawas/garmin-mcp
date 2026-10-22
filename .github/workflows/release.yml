@@ -1,0 +1,132 @@
+name: Release
+
+# Ausgelöst durch einen Versions-Tag, z.B. `git tag v0.4.0 && git push origin v0.4.0`.
+# Ablauf: prüfen & bauen → PyPI → GitHub Release (.mcpb) → MCP Registry.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      mcpb_sha256: ${{ steps.mcpb.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Tag mit Versionen abgleichen
+        id: version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          python3 - "$TAG_VERSION" <<'EOF'
+          import json, sys, tomllib
+          tag = sys.argv[1]
+          found = {
+              "pyproject.toml": tomllib.load(open("pyproject.toml", "rb"))["project"]["version"],
+              "manifest.json": json.load(open("manifest.json"))["version"],
+              "server.json": json.load(open("server.json"))["version"],
+          }
+          bad = {k: v for k, v in found.items() if v != tag}
+          assert not bad, f"Tag v{tag} passt nicht zu {bad}"
+          EOF
+          echo "version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Tests
+        run: |
+          uv sync --locked
+          uv run pytest
+
+      - name: Python-Paket bauen
+        run: uv build
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "lts/*"
+
+      - name: Desktop Extension packen
+        id: mcpb
+        run: |
+          npx -y @anthropic-ai/mcpb pack . garmin-connect.mcpb
+          echo "sha256=$(sha256sum garmin-connect.mcpb | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            dist/
+            garmin-connect.mcpb
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    # Trusted Publishing: auf pypi.org einmalig als Publisher eintragen (siehe README)
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Release mit .mcpb erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            garmin-connect.mcpb dist/*
+
+  mcp-registry:
+    needs: [build, pypi, github-release]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: SHA-256 der .mcpb in server.json eintragen
+        run: |
+          jq --arg sha "${{ needs.build.outputs.mcpb_sha256 }}" \
+            '(.packages[] | select(.registryType == "mcpb") | .fileSha256) = $sha' \
+            server.json > server.tmp && mv server.tmp server.json
+          cat server.json
+
+      - name: mcp-publisher installieren
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Bei der MCP Registry anmelden (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: In der MCP Registry veröffentlichen
+        run: |
+          # PyPI braucht nach dem Upload einen Moment, bis die README (mcp-name) abrufbar ist
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "Versuch $attempt fehlgeschlagen, neuer Versuch in 30 s"
+            sleep 30
+          done
+          exit 1

@@ -1,9 +1,8 @@
-"""Garmin Connect Personal API als MCP-Server (Claude Desktop Extension „Garmin Connect“).
+"""MCP-Server für die Garmin Connect Personal API.
 
 Stellt die eigenen Garmin-Daten (Aktivitäten, Schlaf, HRV, Body Battery, Stress …)
-als read-only Tools bereit. Der API-Key kommt aus den Extension-Einstellungen
-(Umgebungsvariable GARMIN_PERSONAL_API_KEY); das Bearer-Token wird gecacht und erneuert.
-Abhängigkeiten: pyproject.toml.
+als read-only Tools bereit. Der API-Key kommt aus der Umgebungsvariable
+GARMIN_PERSONAL_API_KEY; das Bearer-Token wird gecacht und erneuert.
 """
 
 from __future__ import annotations
@@ -38,8 +37,9 @@ CACHE_DIR = DATA_DIR / "activities"
 TOKEN_CACHE_FILE = DATA_DIR / "bearer-token.json"
 KEY_PORTAL = "https://connect.garmin.com/app/settings/personalApiToken"
 KEY_HINT = (
-    "Garmin Personal API Key fehlt oder ist ungültig. In Claude Desktop unter Einstellungen → "
-    "Extensions → Garmin Connect → Konfigurieren eintragen und die Extension neu aktivieren. "
+    "Garmin Personal API Key fehlt oder ist ungültig. Claude Desktop Extension: unter Einstellungen → "
+    "Extensions → Garmin Connect → Konfigurieren eintragen. Andere Clients: Umgebungsvariable "
+    "GARMIN_PERSONAL_API_KEY in der MCP-Konfiguration setzen. "
     f"Neuen Key erstellen: {KEY_PORTAL} → Create Key."
 )
 MAX_LIST_LEN = 40  # längere Arrays (Zeitreihen) werden standardmässig zusammengefasst
@@ -79,7 +79,6 @@ class _Garmin:
 
     def _token(self, force: bool = False) -> str:
         return self._auth.obtain_token(_api_key(), force_refresh=force).access_token
-
 
     def client(self) -> GarminPersonalApiClient:
         if self._client is None:
@@ -253,11 +252,27 @@ def spo2_day(date: str | None = None) -> Any:
 # --------------------------------------------------------------------------- Aktivitäten
 
 _ACTIVITY_FIELDS = (
-    "activityId", "activityName", "startTimeLocal", "activityType", "distance", "duration",
-    "movingDuration", "elevationGain", "averageSpeed", "averageHR", "maxHR", "averagePower",
-    "normPower", "averageRunningCadenceInStepsPerMinute", "aerobicTrainingEffect",
-    "anaerobicTrainingEffect", "activityTrainingLoad", "vO2MaxValue", "calories",
-    "trainingEffectLabel", "locationName",
+    "activityId",
+    "activityName",
+    "startTimeLocal",
+    "activityType",
+    "distance",
+    "duration",
+    "movingDuration",
+    "elevationGain",
+    "averageSpeed",
+    "averageHR",
+    "maxHR",
+    "averagePower",
+    "normPower",
+    "averageRunningCadenceInStepsPerMinute",
+    "aerobicTrainingEffect",
+    "anaerobicTrainingEffect",
+    "activityTrainingLoad",
+    "vO2MaxValue",
+    "calories",
+    "trainingEffectLabel",
+    "locationName",
 )
 
 
@@ -270,7 +285,11 @@ def _slim_activity(a: dict) -> dict:
     for k in ("duration", "movingDuration"):
         if out.get(k):
             out[f"{k}_min"] = round(out.pop(k) / 60, 1)
-    if out.get("averageSpeed") and out.get("activityType") in ("running", "trail_running", "treadmill_running"):
+    if out.get("averageSpeed") and out.get("activityType") in (
+        "running",
+        "trail_running",
+        "treadmill_running",
+    ):
         out["avg_pace_min_per_km"] = _pace(out["averageSpeed"])
     return out
 
@@ -345,17 +364,47 @@ def _download(activity_id: int) -> bytes:
 
 
 _SESSION_FIELDS = (
-    "sport", "sub_sport", "start_time", "total_elapsed_time", "total_timer_time", "total_distance",
-    "avg_heart_rate", "max_heart_rate", "avg_speed", "enhanced_avg_speed", "avg_power",
-    "normalized_power", "avg_cadence", "total_ascent", "total_descent", "total_calories",
-    "total_training_effect", "total_anaerobic_training_effect", "training_load_peak",
+    "sport",
+    "sub_sport",
+    "start_time",
+    "total_elapsed_time",
+    "total_timer_time",
+    "total_distance",
+    "avg_heart_rate",
+    "max_heart_rate",
+    "avg_speed",
+    "enhanced_avg_speed",
+    "avg_power",
+    "normalized_power",
+    "avg_cadence",
+    "total_ascent",
+    "total_descent",
+    "total_calories",
+    "total_training_effect",
+    "total_anaerobic_training_effect",
+    "training_load_peak",
 )
 _LAP_FIELDS = (
-    "start_time", "total_timer_time", "total_distance", "avg_heart_rate", "max_heart_rate",
-    "avg_speed", "enhanced_avg_speed", "avg_power", "avg_cadence", "total_ascent", "intensity",
+    "start_time",
+    "total_timer_time",
+    "total_distance",
+    "avg_heart_rate",
+    "max_heart_rate",
+    "avg_speed",
+    "enhanced_avg_speed",
+    "avg_power",
+    "avg_cadence",
+    "total_ascent",
+    "intensity",
 )
 _RECORD_FIELDS = (
-    "heart_rate", "enhanced_speed", "speed", "power", "cadence", "enhanced_altitude", "altitude",
+    "heart_rate",
+    "enhanced_speed",
+    "speed",
+    "power",
+    "cadence",
+    "enhanced_altitude",
+    "altitude",
     "distance",
 )
 
@@ -384,8 +433,10 @@ def _parse_fit(zip_bytes: bytes, step: int) -> dict:
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         fit_names = [n for n in zf.namelist() if n.lower().endswith(".fit")]
         if not fit_names:
-            return {"error": "Keine FIT-Datei im Download (evtl. manuell erfasste Aktivität)",
-                    "files": zf.namelist()}
+            return {
+                "error": "Keine FIT-Datei im Download (evtl. manuell erfasste Aktivität)",
+                "files": zf.namelist(),
+            }
         fit = zf.read(fit_names[0])
 
     sessions, laps, records = [], [], []
@@ -453,9 +504,6 @@ def raw_get(path: str, params: dict[str, str] | None = None, include_timeseries:
     return _run("get", path, params=params, timeseries=include_timeseries)
 
 
-def main() -> None:
+def serve() -> None:
+    """Startet den Server über stdio."""
     mcp.run("stdio")
-
-
-if __name__ == "__main__":
-    main()

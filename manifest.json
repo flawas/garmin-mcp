@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "garmin-connect",
   "display_name": "Garmin Connect",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Eigene Garmin-Connect-Daten in Claude analysieren: Aktivitäten inkl. FIT-Verläufe, Schlaf, HRV, Body Battery, Stress, Gewicht.",
   "long_description": "Read-only Zugriff auf die eigenen Daten über die Garmin Connect Personal API. Benötigt einen persönlichen API-Key von connect.garmin.com/app/settings/personalApiToken. Keine Verbindung zu Garmin Ltd.",
   "author": {
@@ -17,14 +17,16 @@
   "icon": "icon.png",
   "server": {
     "type": "uv",
-    "entry_point": "garmin_mcp.py",
+    "entry_point": "src/mcp_server_garmin_connect/server.py",
     "mcp_config": {
       "command": "uv",
       "args": [
         "run",
         "--directory",
         "${__dirname}",
-        "garmin_mcp.py"
+        "--no-dev",
+        "--frozen",
+        "mcp-server-garmin-connect"
       ],
       "env": {
         "GARMIN_PERSONAL_API_KEY": "${user_config.garmin_api_key}"
@@ -137,5 +139,6 @@
     "training",
     "sleep",
     "hrv"
-  ]
+  ],
+  "license": "MIT"
 }

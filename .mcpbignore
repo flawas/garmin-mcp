@@ -1,7 +1,13 @@
+.git/
+.github/
 .claude-plugin/
 skills/
-README.md
-*.mcpb
-__pycache__/
+tests/
 .venv/
-uv.lock
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.mcpb
+Dockerfile
+server.json

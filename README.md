@@ -1,28 +1,16 @@
-# Garmin Connect für Claude
+# Garmin Connect MCP Server
 
-Mit diesem Repo kann Claude deine eigenen Garmin-Daten über die **Garmin Connect Personal API** lesen und analysieren: Aktivitäten samt FIT-Verläufen, Schlaf, HRV, Body Battery, Stress, Gewicht und Tageswerte. Der Zugriff ist read-only.
+<!-- mcp-name: io.github.flawas/garmin-mcp -->
 
-Das Repo enthält zwei Teile:
+Ein [Model Context Protocol](https://modelcontextprotocol.io) Server für deine **eigenen Garmin-Connect-Daten** über die [Garmin Connect Personal API](https://developer.garmin.com/gc-developer-program/personal/personal-api/): Aktivitäten samt FIT-Verläufen, Schlaf, HRV, Body Battery, Stress, Gewicht und Tageswerte. Der Zugriff ist read-only.
 
-| Teil | Datei | Inhalt |
-|---|---|---|
-| **Desktop Extension** | `garmin-connect.mcpb` | Der MCP-Server mit allen Tools. Der API-Key wird in den Claude-Einstellungen eingetragen und ist dort sichtbar und änderbar |
-| **Plugin** (Marketplace `flawas`) | `.claude-plugin/`, `skills/` | Analyse-Skills, die Claude zeigen, wie es die Daten auswertet (optional, siehe unten) |
+Dazu gehört ein optionales Claude-Plugin mit Analyse-Skills für Tagesform, Wochenreview, Rennen, Laufbelastung, Unihockey, Ironman sowie Ultra und Trail.
 
-## Installation
-
-1. **API-Key erstellen** unter <https://connect.garmin.com/app/settings/personalApiToken> → *Create Key*. Der Key wird nur einmal angezeigt.
-2. **Extension installieren:** [`garmin-connect.mcpb`](https://github.com/flawas/garmin-mcp/raw/main/garmin-connect.mcpb) herunterladen und doppelklicken, oder in Claude Desktop unter *Einstellungen → Extensions* installieren.
-3. **Key eintragen:** Den Key im Konfigurationsdialog der Extension einfügen. Er wird maskiert und sicher gespeichert. Später findest du ihn unter *Einstellungen → Extensions → Garmin Connect → Konfigurieren*, wo du ihn auch ersetzen kannst.
-4. **Skills (optional):** Den Marketplace `https://github.com/flawas/garmin-mcp` hinzufügen und das Plugin *garmin-connect* installieren. In Claude Code lautet der Befehl `/plugin install garmin-connect --marketplace flawas/garmin-mcp`.
-
-Claude Desktop installiert Python und die Abhängigkeiten beim ersten Start selbst über uv.
-
-## Tools
+### Tools
 
 | Tool | Inhalt | Standard-Zeitraum |
 |---|---|---|
-| `profile` | Profil, VO2max, Laktatschwelle, HF-Zonen | – |
+| `profile` | Profil-Einstellungen und HF-Zonen | – |
 | `daily_summaries` | Schritte, Kalorien, Ruhepuls, Stress, Body Battery, Intensitätsminuten | 7 Tage |
 | `sleep_summaries` | Schlaf pro Nacht inkl. Score | 14 Tage |
 | `hrv_summaries` | HRV pro Nacht, Baseline, Status | 28 Tage |
@@ -37,34 +25,131 @@ Claude Desktop installiert Python und die Abhängigkeiten beim ersten Start selb
 | `activity_streams` | FIT-Datei → Session, Laps, Verlauf (HF, Pace, Leistung, Kadenz, Höhe) | – |
 | `raw_get` | Beliebiger GET-Endpoint aus der [Swagger-Doku](https://developer.garmin.com/gc-developer-program/personal/swagger-docs/) | – |
 
-Token-Cache und FIT-Downloads liegen auf macOS unter `~/Library/Caches/garmin-connect-mcp`.
+Lange Zeitreihen werden standardmässig gekürzt, damit der Chat-Kontext nicht vollläuft. Mit `include_timeseries=true` bekommst du die Rohdaten.
 
-## Skills
+## API-Key
 
-Die Skills werden automatisch aktiv, wenn eine Frage dazu passt.
+Erstelle unter <https://connect.garmin.com/app/settings/personalApiToken> einen Key mit *Create Key*. Er wird nur einmal angezeigt und läuft nach der gewählten Dauer ab (30 Tage bis 1 Jahr). Der Server liest ihn aus der Umgebungsvariable `GARMIN_PERSONAL_API_KEY`.
 
-| Skill | Wofür | Beispiel |
+## Installation
+
+### Claude Desktop (Extension, empfohlen)
+
+1. Lade `garmin-connect.mcpb` aus dem [neuesten Release](https://github.com/flawas/garmin-mcp/releases/latest) herunter und doppelklicke die Datei.
+2. Trag den API-Key im Konfigurationsdialog ein. Er ist danach unter *Einstellungen → Extensions → Garmin Connect* sichtbar und änderbar.
+
+Python und die Abhängigkeiten installiert Claude Desktop selbst.
+
+### Mit uvx (jeder MCP-Client)
+
+Voraussetzung ist [uv](https://docs.astral.sh/uv/). Das Paket wird beim Start automatisch von PyPI geladen.
+
+```json
+{
+  "mcpServers": {
+    "garmin": {
+      "command": "uvx",
+      "args": ["mcp-server-garmin-connect"],
+      "env": { "GARMIN_PERSONAL_API_KEY": "<dein-key>" }
+    }
+  }
+}
+```
+
+In Claude Code genügt ein Befehl:
+
+```bash
+claude mcp add garmin -e GARMIN_PERSONAL_API_KEY=<dein-key> -- uvx mcp-server-garmin-connect
+```
+
+### Mit pip
+
+```bash
+pip install mcp-server-garmin-connect
+GARMIN_PERSONAL_API_KEY=<dein-key> mcp-server-garmin-connect
+```
+
+### Mit Docker
+
+```bash
+docker build -t mcp-server-garmin-connect .
+docker run -i --rm -e GARMIN_PERSONAL_API_KEY=<dein-key> mcp-server-garmin-connect
+```
+
+### Skills (optional, Claude)
+
+Füge den Plugin-Marketplace `https://github.com/flawas/garmin-mcp` hinzu und installiere das Plugin *garmin-connect*. In Claude Code geht das mit `/plugin install garmin-connect --marketplace flawas/garmin-mcp`.
+
+| Skill | Wofür |
+|---|---|
+| `morning-check` | Tagesform-Ampel aus HRV, Schlaf, Ruhepuls und Body Battery mit Empfehlung für heute |
+| `weekly-review` | Wochenbericht nach Sportart, optional als Obsidian-Notiz |
+| `race-readiness` | Taper- und Formcheck, realistische Zielzeit, Pacing-Plan |
+| `race-debrief` | Rennanalyse: Splits, Einbruch, HF-Drift, Kadenz, Lehren |
+| `running-load` | Laufumfang, Steigerungsrate, ACWR, Verletzungsrisiko |
+| `floorball-load` | Unihockey (bei Garmin als Feldhockey erfasst) als Intervallbelastung einordnen |
+| `ironman-build` | Triathlon-Aufbau: Verteilung, Langeinheiten, Koppeltrainings, Lücken |
+| `ultra-trail` | Time on Feet, Höhenmeter, Kilometer-Effort, Ermüdungsresistenz |
+| `training-analysis` | Allgemeine Analysen und Basis für alle anderen Skills |
+
+## Konfiguration
+
+| Variable | Pflicht | Bedeutung |
 |---|---|---|
-| `morning-check` | Tagesform-Ampel aus HRV, Schlaf, Ruhepuls und Body Battery mit Empfehlung für heute | „Morgen-Check“ |
-| `weekly-review` | Wochenbericht nach Sportart mit Load, Intensität, Erholungstrend und Fokus, optional als Obsidian-Notiz | „Wochenreview“ |
-| `race-readiness` | Taper- und Formcheck, realistische Zielzeit, Pacing-Plan | „Bin ich bereit für den Marathon am Sonntag?“ |
-| `race-debrief` | Rennanalyse: Splits, Einbruch, HF-Drift, Kadenz, Lehren | „Wie lief mein Marathon?“ |
-| `running-load` | Laufumfang, Steigerungsrate, ACWR, Longrun-Anteil, Verletzungsrisiko | „Steigere ich zu schnell?“ |
-| `floorball-load` | Unihockey (bei Garmin als Feldhockey erfasst) als Intervallbelastung einordnen und mit dem Ausdauertraining abstimmen | „Wie hart war das Turnier?“ |
-| `ironman-build` | Triathlon-Aufbau: Swim/Bike/Run-Verteilung, Langeinheiten, Koppeltrainings, Lücken | „Bin ich auf Kurs für den Ironman?“ |
-| `ultra-trail` | Time on Feet, Höhenmeter, Kilometer-Effort, Ermüdungsresistenz, Verpflegung | „Reicht meine Vorbereitung für 80 km?“ |
-| `training-analysis` | Allgemeine Analysen und Basis für alle anderen Skills | „Wie hat sich meine HRV entwickelt?“ |
+| `GARMIN_PERSONAL_API_KEY` | ja | Personal API Key |
+| `GARMIN_MCP_DATA_DIR` | nein | Ordner für Token-Cache und FIT-Downloads. Standard ist `~/Library/Caches/garmin-connect-mcp` auf macOS und `~/.cache/garmin-connect-mcp` sonst |
 
-## Fehlerbehebung
+## Debugging
+
+Mit dem [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
+
+```bash
+npx @modelcontextprotocol/inspector uvx mcp-server-garmin-connect
+# aus dem Repo heraus:
+npx @modelcontextprotocol/inspector uv run mcp-server-garmin-connect
+```
 
 | Meldung | Lösung |
 |---|---|
-| `Garmin Personal API Key fehlt oder ist ungültig` | Neuen Key erstellen und unter *Einstellungen → Extensions → Garmin Connect → Konfigurieren* ersetzen. Keys laufen nach der gewählten Dauer ab |
+| `Garmin Personal API Key fehlt oder ist ungültig` | Neuen Key erstellen und in der Extension bzw. in `GARMIN_PERSONAL_API_KEY` ersetzen |
 | `Garmin ist nicht erreichbar` | Internetverbindung, VPN oder Proxy prüfen |
 
 ## Entwicklung
 
-- Die Extension wird mit `npx @anthropic-ai/mcpb pack . garmin-connect.mcpb` gebaut. `.mcpbignore` hält Plugin, Skill und README aus dem Paket.
-- Server-Änderungen: Version in `manifest.json` und `pyproject.toml` erhöhen und das Paket neu bauen. Skill-Änderungen: Version in `.claude-plugin/plugin.json` erhöhen, sonst erhalten installierte Plugins das Update nicht.
+```bash
+uv sync                         # Umgebung inkl. Dev-Tools
+uv run pytest                   # Tests
+uv run ruff check . && uv run ruff format --check .
+uv run pyright                  # Typen
+npx @anthropic-ai/mcpb pack . garmin-connect.mcpb   # Desktop Extension lokal bauen
+```
 
-Die Personal API ist für den persönlichen Zugriff auf die eigenen Daten gedacht. Dieses Projekt steht in keiner Verbindung zu Garmin.
+Aufbau des Repos:
+
+```
+src/mcp_server_garmin_connect/   MCP-Server (Python-Paket, Einstiegspunkt mcp-server-garmin-connect)
+tests/                           pytest
+server.json                      Eintrag für die MCP Registry
+manifest.json, .mcpbignore       Claude Desktop Extension (.mcpb)
+.claude-plugin/, skills/         Claude-Plugin mit Analyse-Skills
+.github/workflows/               CI und Release
+```
+
+### Release
+
+1. Die Version in `pyproject.toml`, `manifest.json` und `server.json` (zweimal: oben und im PyPI-Paket) gleich setzen. Die CI prüft das. Bei Skill-Änderungen zusätzlich `.claude-plugin/plugin.json` erhöhen.
+2. `git tag v<version> && git push origin v<version>`
+3. Der Release-Workflow testet, baut, veröffentlicht auf PyPI, erstellt das GitHub-Release mit der `.mcpb`, trägt deren SHA-256 in `server.json` ein und veröffentlicht in der [MCP Registry](https://registry.modelcontextprotocol.io).
+
+Vor dem ersten Release ist eine einmalige Einrichtung nötig:
+- **PyPI Trusted Publishing:** Auf <https://pypi.org/manage/account/publishing/> einen *pending publisher* anlegen mit PyPI-Projekt `mcp-server-garmin-connect`, Owner `flawas`, Repository `garmin-mcp`, Workflow `release.yml` und Environment `pypi`.
+- **GitHub:** In den Repo-Einstellungen unter *Environments* das Environment `pypi` anlegen.
+- Für die MCP Registry ist nichts einzurichten. Die Anmeldung läuft über GitHub OIDC für den Namensraum `io.github.flawas`.
+
+## Hinweis
+
+Die Garmin Connect Personal API ist für den persönlichen Zugriff auf die eigenen Daten gedacht, nicht für kommerzielle Anwendungen mit mehreren Nutzern. Dieses Projekt steht in keiner Verbindung zu Garmin.
+
+## Lizenz
+
+MIT, siehe [LICENSE](LICENSE).

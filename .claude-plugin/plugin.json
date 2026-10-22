@@ -1,8 +1,8 @@
 {
   "name": "garmin-connect",
   "displayName": "Garmin Connect",
-  "version": "0.3.0",
-  "description": "Analyse-Skills für Garmin-Daten: Tagesform, Wochenreview, Rennvorbereitung und -analyse, Laufbelastung, Unihockey, Ironman, Ultra & Trail. Benötigt die Desktop Extension „Garmin Connect“ (garmin-connect.mcpb) aus demselben Repo.",
+  "version": "0.3.1",
+  "description": "Analyse-Skills für Garmin-Daten: Tagesform, Wochenreview, Rennvorbereitung und -analyse, Laufbelastung, Unihockey, Ironman, Ultra & Trail. Benötigt den Garmin Connect MCP-Server (Claude Desktop Extension oder uvx mcp-server-garmin-connect).",
   "author": {
     "name": "Flavio Waser",
     "url": "https://github.com/flawas"
@@ -17,5 +17,6 @@
     "hrv",
     "mcp"
   ],
-  "icon": "./icon.png"
+  "icon": "./icon.png",
+  "license": "MIT"
 }

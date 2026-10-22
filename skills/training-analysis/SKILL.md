@@ -1,6 +1,6 @@
 ---
 name: training-analysis
-description: Analysiert die eigenen Garmin-Daten des Nutzers (Training, Erholung, Schlaf, HRV, Belastung) mit den Tools des garmin-Servers. Verwenden bei Fragen zu Läufen, Rad- oder anderen Einheiten, Trainingslast, Form, Erholung, Schlaf, HRV, Ruhepuls, Body Battery oder Stress sowie bei Trend- oder Vergleichsfragen über Zeiträume.
+description: Allgemeine Analyse der eigenen Garmin-Daten (Training, Erholung, Schlaf, HRV, Belastung) mit den Tools der Garmin-Connect-Extension. Verwenden bei Fragen zu einzelnen Einheiten, Trends und Vergleichen über Zeiträume, Schlaf, HRV, Ruhepuls, Body Battery oder Stress, sofern kein spezialisierter Garmin-Skill passt (race-readiness, race-debrief, weekly-review, morning-check, running-load, floorball-load, ironman-build, ultra-trail).
 ---
 
 # Garmin-Trainingsanalyse
@@ -25,6 +25,15 @@ Die Daten kommen ausschliesslich über die Tools der Desktop Extension „Garmin
 - `averageSpeed` und `speed_mps` sind in m/s. Die Pace in min/km ist 1000 / speed / 60. Die Tools liefern `pace_min_per_km` meist schon mit.
 - Rohdauern sind in Sekunden, Distanzen in Metern. `list_activities` rechnet bereits in `distance_km` und `duration_min` um.
 - Schlafdauern sind in Sekunden, HRV-Werte (RMSSD) in Millisekunden.
+- Kadenz: `averageRunningCadenceInStepsPerMinute` in `list_activities` zählt beide Beine. `cadence` in `activity_streams` zählt beim Laufen pro Bein, für Schritte pro Minute nimmst du ×2.
+- In `activity_streams` ist `t_s` in `series` die Bruttozeit inklusive Pausen. Pace und Splits rechnest du deshalb über Distanz oder `laps`.
+
+## Datenbesonderheiten
+
+- `activity_type="running"` liefert auch `trail_running` und `treadmill_running`. Andere Sportarten fragst du ohne Filter ab und gruppierst sie nach `activityType`.
+- Unihockey wird meist als `field_hockey` (Feldhockey) erfasst.
+- Läufe unter 1,5 km sind meist Einlaufen, etwa vor Unihockey, oder Fehlstarts. Sie gehören nicht in Pace- oder Kadenz-Statistiken.
+- Der Eintrag eines Tages in `sleep_summaries` und `hrv_summaries` beschreibt die Nacht davor, das Datum ist der Tag des Aufwachens.
 
 ## Bewährte Kennzahlen
 
@@ -33,6 +42,18 @@ Die Daten kommen ausschliesslich über die Tools der Desktop Extension „Garmin
 - **Belastungsverhältnis (ACWR):** Die Summe von `activityTrainingLoad` der letzten 7 Tage im Verhältnis zum Wochenschnitt der letzten 28 Tage. Werte über etwa 1.5 zeigen einen sprunghaften Anstieg der Belastung an.
 - **Erholungsstatus:** Liegt die HRV-Nacht unter der Baseline, steigt der Ruhepuls und sinkt der Sleep Score zugleich, ist das ein Ermüdungssignal. Mehrere Signale über mehrere Tage sind aussagekräftiger als ein einzelner Ausreisser.
 - **Zeit in Zonen:** Die HF-Werte aus `activity_streams` werden den Zonen aus `profile` zugeordnet.
+
+## Spezialisierte Skills
+
+Für diese Fragen gibt es eigene Skills mit genaueren Vorgaben. Nutze sie, wenn sie passen:
+- Rennvorbereitung und Pacing → `race-readiness`
+- Rennanalyse → `race-debrief`
+- Wochenbericht → `weekly-review`
+- Tagesform → `morning-check`
+- Laufumfang und Verletzungsrisiko → `running-load`
+- Unihockey → `floorball-load`
+- Triathlon → `ironman-build`
+- Ultra und Trail → `ultra-trail`
 
 ## Grenzen
 

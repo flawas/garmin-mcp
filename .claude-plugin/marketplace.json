@@ -9,7 +9,7 @@
     {
       "name": "garmin-connect",
       "source": "./",
-      "description": "Analyse-Skill für Garmin-Daten (Training, Schlaf, HRV, Erholung); Server kommt als Desktop Extension garmin-connect.mcpb"
+      "description": "Analyse-Skills für Garmin-Daten (Tagesform, Wochenreview, Rennen, Laufbelastung, Unihockey, Ironman, Ultra); Server kommt als Desktop Extension garmin-connect.mcpb"
     }
   ]
 }

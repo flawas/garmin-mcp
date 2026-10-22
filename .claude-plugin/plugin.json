@@ -1,8 +1,8 @@
 {
   "name": "garmin-connect",
   "displayName": "Garmin Connect",
-  "version": "0.2.0",
-  "description": "Analyse-Skill für Garmin-Daten. Benötigt die Desktop Extension „Garmin Connect“ (garmin-connect.mcpb) aus demselben Repo.",
+  "version": "0.3.0",
+  "description": "Analyse-Skills für Garmin-Daten: Tagesform, Wochenreview, Rennvorbereitung und -analyse, Laufbelastung, Unihockey, Ironman, Ultra & Trail. Benötigt die Desktop Extension „Garmin Connect“ (garmin-connect.mcpb) aus demselben Repo.",
   "author": {
     "name": "Flavio Waser",
     "url": "https://github.com/flawas"

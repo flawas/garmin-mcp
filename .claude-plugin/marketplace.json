@@ -9,7 +9,7 @@
     {
       "name": "garmin-connect",
       "source": "./",
-      "description": "Eigene Garmin-Connect-Daten (Aktivitäten, Schlaf, HRV, Body Battery, Stress, FIT-Verläufe) über die Garmin Personal API analysieren"
+      "description": "Analyse-Skill für Garmin-Daten (Training, Schlaf, HRV, Erholung); Server kommt als Desktop Extension garmin-connect.mcpb"
     }
   ]
 }

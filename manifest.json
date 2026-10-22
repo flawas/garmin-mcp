@@ -1,0 +1,141 @@
+{
+  "manifest_version": "0.4",
+  "name": "garmin-connect",
+  "display_name": "Garmin Connect",
+  "version": "0.2.0",
+  "description": "Eigene Garmin-Connect-Daten in Claude analysieren: Aktivitäten inkl. FIT-Verläufe, Schlaf, HRV, Body Battery, Stress, Gewicht.",
+  "long_description": "Read-only Zugriff auf die eigenen Daten über die Garmin Connect Personal API. Benötigt einen persönlichen API-Key von connect.garmin.com/app/settings/personalApiToken. Keine Verbindung zu Garmin Ltd.",
+  "author": {
+    "name": "Flavio Waser",
+    "url": "https://github.com/flawas"
+  },
+  "homepage": "https://github.com/flawas/garmin-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flawas/garmin-mcp"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "uv",
+    "entry_point": "garmin_mcp.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${__dirname}",
+        "garmin_mcp.py"
+      ],
+      "env": {
+        "GARMIN_PERSONAL_API_KEY": "${user_config.garmin_api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "garmin_api_key": {
+      "type": "string",
+      "title": "Garmin Personal API Key",
+      "description": "Erstellen unter connect.garmin.com/app/settings/personalApiToken → Create Key. Läuft nach der gewählten Dauer ab; dann hier ersetzen.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    {
+      "name": "profile",
+      "description": "Profil-Einstellungen (Gewicht, Grösse, VO2max, Laktatschwelle, Einheiten) und Herzfrequenzzonen."
+    },
+    {
+      "name": "daily_summaries",
+      "description": "Tageszusammenfassungen pro Tag: Schritte, Kalorien, Ruhepuls, Stress, Body Battery,"
+    },
+    {
+      "name": "sleep_summaries",
+      "description": "Schlaf-Zusammenfassung pro Nacht (Dauer, Phasen, Sleep Score). Standard: letzte 14 Tage."
+    },
+    {
+      "name": "hrv_summaries",
+      "description": "HRV pro Nacht (Mittelwert, 7-Tage-Schnitt, Baseline, Status). Standard: letzte 28 Tage."
+    },
+    {
+      "name": "body_battery",
+      "description": "Body Battery pro Tag (Aufladung, Verbrauch, Höchst-/Tiefstwert). Standard: letzte 7 Tage."
+    },
+    {
+      "name": "stress",
+      "description": "Durchschnittlicher Stress pro Tag. Standard: letzte 28 Tage."
+    },
+    {
+      "name": "steps",
+      "description": "Schritte und Schrittziel pro Tag. Standard: letzte 28 Tage."
+    },
+    {
+      "name": "weight",
+      "description": "Gewichtsmessungen (inkl. Körperzusammensetzung, falls vorhanden). Standard: letzte 90 Tage."
+    },
+    {
+      "name": "wellness_activity_summaries",
+      "description": "Wellness-Aktivitätsübersicht pro Tag. Standard: letzte 7 Tage."
+    },
+    {
+      "name": "sleep_day",
+      "description": "Detaillierter Schlaf einer Nacht (Phasen, Atmung, HF, HRV, Sleep Score inkl. Faktoren)."
+    },
+    {
+      "name": "hrv_day",
+      "description": "HRV einer Nacht mit Einzelmessungen (Zeitreihe nur mit include_timeseries=true)."
+    },
+    {
+      "name": "heart_rate_day",
+      "description": "Herzfrequenz eines Tages (Ruhepuls, Min/Max; Verlauf nur mit include_timeseries=true)."
+    },
+    {
+      "name": "fitness_age",
+      "description": "Fitness-Alter und beeinflussende Faktoren."
+    },
+    {
+      "name": "spo2_day",
+      "description": "Pulsoximetrie (SpO2) und Höhenakklimatisierung eines Tages."
+    },
+    {
+      "name": "list_activities",
+      "description": "Aktivitäten (kompakt) im Zeitraum, neueste zuerst. Standard: letzte 30 Tage."
+    },
+    {
+      "name": "activity_details",
+      "description": "Vollständige Zusammenfassung einer Aktivität (Splits-Summary, Trainingseffekt, Gerät usw.)."
+    },
+    {
+      "name": "activity_workouts",
+      "description": "Geplante/strukturierte Workouts, die mit einer Aktivität verknüpft sind."
+    },
+    {
+      "name": "activity_streams",
+      "description": "Lädt die Original-FIT-Datei und liefert Session-Werte, alle Laps und einen auf"
+    },
+    {
+      "name": "raw_get",
+      "description": "Beliebiger GET-Aufruf an die Personal API für Endpoints ohne eigenes Tool"
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ],
+    "runtimes": {
+      "python": ">=3.12"
+    }
+  },
+  "privacy_policies": [
+    "https://www.garmin.com/privacy/connect/"
+  ],
+  "keywords": [
+    "garmin",
+    "fitness",
+    "training",
+    "sleep",
+    "hrv"
+  ]
+}

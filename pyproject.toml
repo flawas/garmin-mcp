@@ -1,0 +1,10 @@
+[project]
+name = "garmin-connect-mcp"
+version = "0.2.0"
+description = "MCP-Server für die Garmin Connect Personal API"
+requires-python = ">=3.12"
+dependencies = [
+    "garmin-connect-personal-api-python>=1.0.0",
+    "mcp>=2.3.0,<3",
+    "fitdecode>=0.11.0",
+]

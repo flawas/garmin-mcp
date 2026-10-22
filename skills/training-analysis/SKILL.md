@@ -5,7 +5,7 @@ description: Analysiert die eigenen Garmin-Daten des Nutzers (Training, Erholung
 
 # Garmin-Trainingsanalyse
 
-Die Daten kommen ausschliesslich über die Tools des `garmin`-MCP-Servers. Alle Tools sind read-only. Datumswerte werden immer als `YYYY-MM-DD` übergeben, und "heute" ergibt sich aus dem aktuellen Datum.
+Die Daten kommen ausschliesslich über die Tools der Desktop Extension „Garmin Connect“ (MCP-Server `garmin`). Alle Tools sind read-only. Datumswerte werden immer als `YYYY-MM-DD` übergeben, und "heute" ergibt sich aus dem aktuellen Datum.
 
 ## Vorgehen
 
@@ -38,4 +38,5 @@ Die Daten kommen ausschliesslich über die Tools des `garmin`-MCP-Servers. Alle 
 
 - Garmin-Werte wie VO2max, Training Effect und Body Battery sind Schätzungen. Benenne sie auch so.
 - Stelle keine medizinischen Diagnosen. Bei auffälligen Werten wie einem dauerhaft stark erhöhten Ruhepuls, Rhythmusauffälligkeiten oder sehr niedriger SpO2 empfiehlst du eine ärztliche Abklärung.
-- Liefert ein Tool `hint` oder `error` zum API-Key, gibst du den Hinweis wörtlich weiter und rätst nicht weiter.
+- Meldet ein Tool einen fehlenden oder ungültigen API-Key, gibst du den `hint` weiter: Der Key wird in Claude Desktop unter Einstellungen → Extensions → Garmin Connect eingetragen. Bitte den Nutzer nie, den Key in den Chat zu schreiben.
+- Fehlen die Garmin-Tools ganz, ist die Desktop Extension „Garmin Connect“ nicht installiert oder deaktiviert.

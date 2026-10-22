@@ -1,17 +1,9 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "garmin-connect-personal-api-python>=1.0.0",
-#     "mcp>=2.3.0,<3",
-#     "fitdecode>=0.11.0",
-# ]
-# ///
-"""Garmin Connect Personal API als MCP-Server des Claude-Plugins garmin-connect.
+"""Garmin Connect Personal API als MCP-Server (Claude Desktop Extension „Garmin Connect“).
 
 Stellt die eigenen Garmin-Daten (Aktivitäten, Schlaf, HRV, Body Battery, Stress …)
-als read-only Tools bereit. Der API-Key kommt aus den Plugin-Einstellungen
+als read-only Tools bereit. Der API-Key kommt aus den Extension-Einstellungen
 (Umgebungsvariable GARMIN_PERSONAL_API_KEY); das Bearer-Token wird gecacht und erneuert.
-Abhängigkeiten stehen oben als PEP-723-Block und in requirements.txt (synchron halten).
+Abhängigkeiten: pyproject.toml.
 """
 
 from __future__ import annotations
@@ -37,14 +29,18 @@ from mcp.server.mcpserver import MCPServer
 # stdout gehört dem MCP-Protokoll – Logs nur nach stderr.
 logging.basicConfig(stream=sys.stderr, level=logging.WARNING)
 
-# Plugin-Datenordner (vom Launcher gesetzt): Token-Cache und FIT-Downloads
-DATA_DIR = Path(os.environ["GARMIN_MCP_DATA_DIR"])
+# Token-Cache und FIT-Downloads
+DATA_DIR = Path(
+    os.environ.get("GARMIN_MCP_DATA_DIR")
+    or ("~/Library/Caches/garmin-connect-mcp" if sys.platform == "darwin" else "~/.cache/garmin-connect-mcp")
+).expanduser()
 CACHE_DIR = DATA_DIR / "activities"
 TOKEN_CACHE_FILE = DATA_DIR / "bearer-token.json"
+KEY_PORTAL = "https://connect.garmin.com/app/settings/personalApiToken"
 KEY_HINT = (
-    "Garmin Personal API Key fehlt oder ist ungültig. Key erstellen unter "
-    "https://connect.garmin.com/app/settings/personalApiToken und in den Plugin-Einstellungen "
-    "(Garmin Connect → Konfigurieren) eintragen."
+    "Garmin Personal API Key fehlt oder ist ungültig. In Claude Desktop unter Einstellungen → "
+    "Extensions → Garmin Connect → Konfigurieren eintragen und die Extension neu aktivieren. "
+    f"Neuen Key erstellen: {KEY_PORTAL} → Create Key."
 )
 MAX_LIST_LEN = 40  # längere Arrays (Zeitreihen) werden standardmässig zusammengefasst
 
@@ -52,6 +48,8 @@ mcp = MCPServer(
     name="garmin",
     instructions=(
         "Read-only Zugriff auf die eigenen Garmin-Connect-Daten des Nutzers. "
+        "Meldet ein Tool einen fehlenden oder ungültigen API-Key, den mitgelieferten Hinweis "
+        "weitergeben; den Nutzer nie bitten, den Key in den Chat zu schreiben. "
         "Datumsangaben immer als YYYY-MM-DD. Für Trends zuerst Range-Tools "
         "(daily_summaries, sleep_summaries, hrv_summaries, body_battery, list_activities) "
         "nutzen; Tageszeitreihen nur mit include_timeseries=true holen, wenn wirklich nötig. "
@@ -63,6 +61,14 @@ mcp = MCPServer(
 # --------------------------------------------------------------------------- Auth
 
 
+def _api_key() -> str:
+    """Key aus den Extension-Einstellungen."""
+    key = os.environ.get("GARMIN_PERSONAL_API_KEY", "").strip()
+    if not key or key.startswith("${"):
+        raise GarminPersonalApiError("No personal API key configured")
+    return key
+
+
 class _Garmin:
     """Hält Client und Token; erneuert bei 401 einmal automatisch."""
 
@@ -72,10 +78,8 @@ class _Garmin:
         self._client: GarminPersonalApiClient | None = None
 
     def _token(self, force: bool = False) -> str:
-        key = os.environ.get("GARMIN_PERSONAL_API_KEY", "").strip()
-        if not key or key.startswith("${"):
-            raise GarminPersonalApiError("No personal API key configured")
-        return self._auth.obtain_token(key, force_refresh=force).access_token
+        return self._auth.obtain_token(_api_key(), force_refresh=force).access_token
+
 
     def client(self) -> GarminPersonalApiClient:
         if self._client is None:

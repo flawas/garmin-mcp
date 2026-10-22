@@ -1,8 +1,8 @@
 {
   "name": "garmin-connect",
   "displayName": "Garmin Connect",
-  "version": "0.1.0",
-  "description": "Read-only Zugriff auf die eigenen Garmin-Connect-Daten über die Garmin Connect Personal API: Aktivitäten inkl. FIT-Verläufe, Schlaf, HRV, Body Battery, Stress, Gewicht und Tageswerte.",
+  "version": "0.2.0",
+  "description": "Analyse-Skill für Garmin-Daten. Benötigt die Desktop Extension „Garmin Connect“ (garmin-connect.mcpb) aus demselben Repo.",
   "author": {
     "name": "Flavio Waser",
     "url": "https://github.com/flawas"
@@ -17,25 +17,5 @@
     "hrv",
     "mcp"
   ],
-  "mcpServers": {
-    "garmin": {
-      "command": "sh",
-      "args": [
-        "${CLAUDE_PLUGIN_ROOT}/scripts/run-server.sh"
-      ],
-      "env": {
-        "GARMIN_PERSONAL_API_KEY": "${user_config.garmin_api_key}"
-      }
-    }
-  },
-  "userConfig": {
-    "garmin_api_key": {
-      "type": "string",
-      "title": "Garmin Personal API Key",
-      "description": "Key von connect.garmin.com/app/settings/personalApiToken (Create Key, wird nur einmal angezeigt).",
-      "sensitive": true,
-      "required": true
-    }
-  },
-  "icon": "./.claude-plugin/icon.png"
+  "icon": "./icon.png"
 }

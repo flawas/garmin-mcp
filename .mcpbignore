@@ -1,0 +1,7 @@
+.claude-plugin/
+skills/
+README.md
+*.mcpb
+__pycache__/
+.venv/
+uv.lock

@@ -1,21 +1,22 @@
 # Garmin Connect für Claude
 
-Ein Claude-Plugin, mit dem Claude deine eigenen Garmin-Daten über die **Garmin Connect Personal API** lesen und analysieren kann: Aktivitäten samt FIT-Verläufen, Schlaf, HRV, Body Battery, Stress, Gewicht und Tageswerte. Der Zugriff ist read-only.
+Mit diesem Repo kann Claude deine eigenen Garmin-Daten über die **Garmin Connect Personal API** lesen und analysieren: Aktivitäten samt FIT-Verläufen, Schlaf, HRV, Body Battery, Stress, Gewicht und Tageswerte. Der Zugriff ist read-only.
 
-Das Repo ist ein Plugin-Marketplace (`flawas`) mit dem Plugin `garmin-connect`.
+Das Repo enthält zwei Teile:
 
-## Voraussetzungen
-
-- macOS oder Linux mit **uv** (`brew install uv`). Ohne uv genügt auch Python ≥ 3.12 im PATH.
-- Ein **Garmin Personal API Key**: <https://connect.garmin.com/app/settings/personalApiToken> → *Create Key*. Der Key wird nur einmal angezeigt.
+| Teil | Datei | Inhalt |
+|---|---|---|
+| **Desktop Extension** | `garmin-connect.mcpb` | Der MCP-Server mit allen Tools. Der API-Key wird in den Claude-Einstellungen eingetragen und ist dort sichtbar und änderbar |
+| **Plugin** (Marketplace `flawas`) | `.claude-plugin/`, `skills/` | Der Skill *training-analysis*, der Claude die Auswertung der Daten zeigt (optional) |
 
 ## Installation
 
-1. Den Marketplace in Claude per GitHub-Link hinzufügen: `https://github.com/flawas/garmin-mcp`.
-   In Claude Code lauten die Befehle `/plugin marketplace add flawas/garmin-mcp` und `/plugin install garmin-connect@flawas`.
-2. Das Plugin **Garmin Connect** installieren und den API-Key in den Plugin-Einstellungen eintragen.
+1. **API-Key erstellen** unter <https://connect.garmin.com/app/settings/personalApiToken> → *Create Key*. Der Key wird nur einmal angezeigt.
+2. **Extension installieren:** [`garmin-connect.mcpb`](https://github.com/flawas/garmin-mcp/raw/main/garmin-connect.mcpb) herunterladen und doppelklicken, oder in Claude Desktop unter *Einstellungen → Extensions* installieren.
+3. **Key eintragen:** Den Key im Konfigurationsdialog der Extension einfügen. Er wird maskiert und sicher gespeichert. Später findest du ihn unter *Einstellungen → Extensions → Garmin Connect → Konfigurieren*, wo du ihn auch ersetzen kannst.
+4. **Skill (optional):** Den Marketplace `https://github.com/flawas/garmin-mcp` hinzufügen und das Plugin *garmin-connect* installieren.
 
-Beim ersten Start werden die Abhängigkeiten automatisch installiert. Danach startet der Server in etwa einer Sekunde.
+Claude Desktop installiert Python und die Abhängigkeiten beim ersten Start selbst über uv.
 
 ## Tools
 
@@ -36,18 +37,18 @@ Beim ersten Start werden die Abhängigkeiten automatisch installiert. Danach sta
 | `activity_streams` | FIT-Datei → Session, Laps, Verlauf (HF, Pace, Leistung, Kadenz, Höhe) | – |
 | `raw_get` | Beliebiger GET-Endpoint aus der [Swagger-Doku](https://developer.garmin.com/gc-developer-program/personal/swagger-docs/) | – |
 
-Der Skill **training-analysis** zeigt Claude, wie es die Tools kombiniert und Kennzahlen wie aerobe Effizienz, kardiale Drift, Belastungsverhältnis und Erholungsstatus berechnet.
+Token-Cache und FIT-Downloads liegen auf macOS unter `~/Library/Caches/garmin-connect-mcp`.
 
 ## Fehlerbehebung
 
 | Meldung | Lösung |
 |---|---|
-| `Weder uv noch Python >= 3.12 gefunden` | `brew install uv` ausführen und Claude neu starten |
-| `Garmin Personal API Key fehlt oder ist ungültig` | Neuen Key erstellen und in den Plugin-Einstellungen eintragen. Keys laufen nach der gewählten Laufzeit ab |
+| `Garmin Personal API Key fehlt oder ist ungültig` | Neuen Key erstellen und unter *Einstellungen → Extensions → Garmin Connect → Konfigurieren* ersetzen. Keys laufen nach der gewählten Dauer ab |
+| `Garmin ist nicht erreichbar` | Internetverbindung, VPN oder Proxy prüfen |
 
 ## Entwicklung
 
-- Bei jeder Änderung `version` in `.claude-plugin/plugin.json` erhöhen, sonst bleiben installierte Plugins auf der alten Version.
-- Abhängigkeiten an zwei Stellen synchron halten: im PEP-723-Block in `garmin_mcp.py` und in `requirements.txt`.
+- Die Extension wird mit `npx @anthropic-ai/mcpb pack . garmin-connect.mcpb` gebaut. `.mcpbignore` hält Plugin, Skill und README aus dem Paket.
+- Bei Änderungen die Version in `manifest.json`, `pyproject.toml` und `.claude-plugin/plugin.json` gemeinsam erhöhen und das Paket neu bauen.
 
 Die Personal API ist für den persönlichen Zugriff auf die eigenen Daten gedacht. Dieses Projekt steht in keiner Verbindung zu Garmin.

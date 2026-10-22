@@ -1,0 +1,15 @@
+{
+  "name": "flawas",
+  "description": "Plugins von Flavio Waser (flawas)",
+  "owner": {
+    "name": "Flavio Waser",
+    "url": "https://github.com/flawas"
+  },
+  "plugins": [
+    {
+      "name": "garmin-connect",
+      "source": "./",
+      "description": "Eigene Garmin-Connect-Daten (Aktivitäten, Schlaf, HRV, Body Battery, Stress, FIT-Verläufe) über die Garmin Personal API analysieren"
+    }
+  ]
+}
